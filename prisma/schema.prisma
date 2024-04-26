@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model cart {
+  id_cart    Int      @id @default(autoincrement())
+  id_user    Int
+  id_product Int
+  qts        Int
+  payed      Int      @db.TinyInt
+  confirmed  Int      @db.TinyInt
+  products   products @relation(fields: [id_product], references: [product_id], onDelete: Cascade, map: "fk_proto")
+  users      users    @relation(fields: [id_user], references: [user_id], onDelete: Cascade, map: "fk_user")
+
+  @@index([id_product], map: "fk_proto_idx")
+  @@index([id_user], map: "fk_user_idx")
+}
+
+model categories {
+  id               Int          @id @default(autoincrement())
+  title            String       @db.VarChar(200)
+  web_title        String       @db.VarChar(200)
+  parent           Int?
+  leval            Int
+  categories       categories?  @relation("categoriesTocategories", fields: [parent], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "parent")
+  other_categories categories[] @relation("categoriesTocategories")
+  products         products[]
+
+  @@index([parent], map: "parent_idx")
+}
+
+model city {
+  ID          Int      @id @default(autoincrement())
+  Name        String?  @db.Text
+  CountryCode String?  @db.VarChar(3)
+  District    String?  @db.Text
+  country     country? @relation(fields: [CountryCode], references: [Code], onDelete: NoAction, onUpdate: NoAction, map: "fk_city")
+  users       users[]
+
+  @@index([CountryCode], map: "fk_city_idx")
+}
+
+model country {
+  Code      String  @id @db.VarChar(3)
+  Name      String? @db.Text
+  Continent String? @db.Text
+  Region    String? @db.Text
+  LocalName String? @db.Text
+  Capital   Int?
+  Code2     String? @db.Text
+  city      city[]
+}
+
+model products {
+  product_id          Int        @id @default(autoincrement())
+  product_name        String     @db.VarChar(200)
+  product_description String     @db.LongText
+  dossier             String     @db.VarChar(200)
+  category_id         Int
+  in_stock            Int        @default(1)
+  price               Float
+  brand               String     @db.VarChar(200)
+  nbr_image           Int?
+  date_added          DateTime?  @db.DateTime(0)
+  cart                cart[]
+  categories          categories @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_products_1")
+
+  @@index([category_id], map: "fk_products_1_idx")
+}
+
+model users {
+  user_id           Int    @id @default(autoincrement())
+  user_name         String @db.VarChar(255)
+  user_email        String @unique(map: "user_email") @db.VarChar(255)
+  user_phone        String @db.VarChar(15)
+  user_fname        String @db.VarChar(255)
+  user_lname        String @db.VarChar(45)
+  user_password     String @db.LongText
+  user_city         Int
+  user_adress       String @db.VarChar(255)
+  user_login_status Int    @default(0)
+  cart              cart[]
+  city              city   @relation(fields: [user_city], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "fk_city_user")
+
+  @@index([user_city], map: "fk_city_user_idx")
+}
